@@ -1,489 +1,340 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مساعد جيميني الصوتي</title>
+    <title>مساعد Gemini - تصميم Venom</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+
+        :root {
+            --background-color: #ffffff;
+            --main-color: #000000;
+            --text-color: #333333;
+            --status-color: #888888;
+        }
 
         body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Tajawal', sans-serif;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            padding: 20px;
             overflow: hidden;
         }
 
-        .container {
+        #container {
+            text-align: center;
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #avatarCanvas {
             width: 100%;
-            max-width: 600px;
-            z-index: 10;
+            max-width: 500px;
+            height: 500px;
         }
 
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            text-shadow: 0 0 10px #fff, 0 0 20px #fff;
-        }
-
-        #visualizer-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #visualizer-canvas {
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-
-        #status {
-            font-size: 1.25rem;
-            color: #ccc;
-            height: 30px;
-            text-shadow: 0 0 5px #fff;
-        }
-
-        button {
-            background: linear-gradient(45deg, #007bff, #00c6ff);
-            color: #fff;
-            border: none;
-            padding: 15px 30px;
+        #startButton {
+            margin-top: 40px;
+            padding: 18px 40px;
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 700;
+            color: var(--main-color);
+            background-color: transparent;
+            border: 2px solid var(--main-color);
             border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
-            margin-top: 1rem;
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
-        }
-
-        button:disabled {
-            background: #444;
-            cursor: not-allowed;
-            box-shadow: none;
-            color: #888;
-        }
-
-        #response-container {
-            background-color: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 2rem;
-            max-width: 80%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
-
-        #response-text {
-            font-size: 1rem;
-            text-align: left;
-            direction: rtl; /* For Arabic text */
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
         }
         
-        .feature-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 1rem;
+        #startButton:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: var(--main-color);
+            transition: all 0.4s ease;
+            z-index: -1;
         }
 
-        .feature-buttons button {
-            padding: 10px 15px;
-            font-size: 1rem;
-            border-radius: 20px;
-            background: #444;
-            box-shadow: none;
-            transition: background 0.3s ease;
+        #startButton:hover {
+            color: var(--background-color);
         }
-        .feature-buttons button:hover {
-            background: #666;
-            transform: none;
-            box-shadow: none;
+        
+        #startButton:hover:before {
+            left: 0;
+        }
+        
+        #status {
+            margin-top: 25px;
+            font-size: 1.2rem;
+            color: var(--status-color);
+            height: 30px;
+            transition: color 0.3s ease;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>مساعد جيميني الصوتي</h1>
-        <div id="visualizer-container">
-            <canvas id="visualizer-canvas" width="300" height="300"></canvas>
-        </div>
+    <div id="container">
+        <canvas id="avatarCanvas"></canvas>
+        <button id="startButton">تحدث الآن</button>
         <p id="status">اضغط على الزر لبدء المحادثة</p>
-        <button id="startButton">بدء المحادثة</button>
-        <div id="response-container" style="display:none;">
-            <p id="response-text"></p>
-            <div class="feature-buttons">
-                <button id="summarizeButton">تلخيص النص ✨</button>
-                <button id="suggestButton">اقتراح سؤال ✨</button>
-            </div>
-        </div>
     </div>
 
     <script>
-        // Global variables for service access
+        // --- 1. الإعدادات والمتغيرات الأساسية ---
+        const startButton = document.getElementById('startButton');
+        const statusDiv = document.getElementById('status');
+        const canvas = document.getElementById('avatarCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 500;
+        canvas.height = 500;
+
+        // !! هام جدًا: استبدل هذا النص بمفتاح Gemini API الخاص بك
+        const GEMINI_API_KEY = "هنا تضع مفتاحك الخاص";
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+        
         let audioContext;
         let analyser;
-        let microphone;
+        let dataArray;
         let isListening = false;
-        let isSpeaking = false;
-        let recognition;
-        let audio;
-        let api_key = "AIzaSyAnAUCajzM7PqrM6k5znxaOAKs3R1kHzWk";
-        let lastResponseText = "";
+        let conversationHistory = [];
 
-        // Elements
-        const canvas = document.getElementById('visualizer-canvas');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('status');
-        const startButton = document.getElementById('startButton');
-        const responseContainer = document.getElementById('response-container');
-        const responseTextElement = document.getElementById('response-text');
-        const summarizeButton = document.getElementById('summarizeButton');
-        const suggestButton = document.getElementById('suggestButton');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("عذراً، متصفحك لا يدعم التعرف على الكلام.");
+        }
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'ar-SA';
+        recognition.interimResults = false;
 
-        // List of available voices for TTS
-        const availableVoices = ["Kore", "Puck", "Charon", "Zephyr", "Iapetus", "Laomedeia", "Achernar", "Alnilam", "Pulcherrima", "Sadachbia", "Sulafat"];
+        // --- 2. محرك الرسوميات المتقدم (تأثير الفينوم السائل) ---
 
-        // Function to convert PCM data to WAV file
-        function pcmToWav(pcmData, sampleRate) {
-            const numChannels = 1;
-            const bytesPerSample = 2;
-            const sampleSize = pcmData.length * bytesPerSample;
-            const buffer = new ArrayBuffer(44 + sampleSize);
-            const view = new DataView(buffer);
-            let offset = 0;
-
-            function writeString(str) {
-                for (let i = 0; i < str.length; i++) {
-                    view.setUint8(offset++, str.charCodeAt(i));
-                }
+        class Metaball {
+            constructor(x, y, r, ctx) {
+                this.x = x;
+                this.y = y;
+                this.r = r;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.ctx = ctx;
             }
 
-            // RIFF chunk
-            writeString("RIFF");
-            view.setUint32(offset, 36 + sampleSize, true);
-            offset += 4;
-            writeString("WAVE");
-            offset += 4;
+            update(bass, mids) {
+                this.x += this.vx * (mids / 255 * 2);
+                this.y += this.vy * (mids / 255 * 2);
 
-            // fmt chunk
-            writeString("fmt ");
-            view.setUint32(offset, 16, true);
-            offset += 4;
-            view.setUint16(offset, 1, true);
-            offset += 2; // Audio format (1 = PCM)
-            view.setUint16(offset, numChannels, true);
-            offset += 2; // Number of channels
-            view.setUint32(offset, sampleRate, true);
-            offset += 4; // Sample rate
-            view.setUint32(offset, sampleRate * numChannels * bytesPerSample, true);
-            offset += 4; // Byte rate
-            view.setUint16(offset, numChannels * bytesPerSample, true);
-            offset += 2; // Block align
-            view.setUint16(offset, 16, true);
-            offset += 2; // Bits per sample
+                if (this.x > this.ctx.canvas.width + this.r) this.x = -this.r;
+                if (this.x < -this.r) this.x = this.ctx.canvas.width + this.r;
+                if (this.y > this.ctx.canvas.height + this.r) this.y = -this.r;
+                if (this.y < -this.r) this.y = this.ctx.canvas.height + this.r;
 
-            // data chunk
-            writeString("data");
-            view.setUint32(offset, sampleSize, true);
-            offset += 4;
-
-            // PCM data
-            for (let i = 0; i < pcmData.length; i++) {
-                view.setInt16(offset, pcmData[i], true);
-                offset += 2;
+                // الترددات المنخفضة تتحكم في حجم الكرات
+                this.r = 30 + (bass / 255) * 70; 
             }
-
-            return new Blob([view], { type: "audio/wav" });
         }
 
-        // Convert Base64 to Int16Array, ensuring even byte length
-        function base64ToPcm16Array(base64) {
-            const binaryString = atob(base64);
-            const len = binaryString.length;
-            const byteLength = (len % 2 === 0) ? len : len - 1;
-            const pcm16 = new Int16Array(byteLength / 2);
-            for (let i = 0; i < byteLength; i += 2) {
-                const val = (binaryString.charCodeAt(i) | (binaryString.charCodeAt(i + 1) << 8));
-                pcm16[i / 2] = val;
-            }
-            return pcm16;
+        const metaballs = [];
+        for (let i = 0; i < 5; i++) {
+            metaballs.push(new Metaball(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height,
+                Math.random() * 50 + 20,
+                ctx
+            ));
         }
 
-        // Draw the visualizer animation
-        function drawVisualizer(dataArray) {
+        let particles = [];
+        function createParticles(treble) {
+            // الترددات العالية تطلق جسيمات صغيرة
+            const intensity = treble / 255;
+            const count = Math.floor(intensity * 10);
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 8 * intensity,
+                    vy: (Math.random() - 0.5) * 8 * intensity,
+                    alpha: 1,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+        
+        let animationFrameId;
+        function drawAvatar() {
+            animationFrameId = requestAnimationFrame(drawAvatar);
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
+            if (!analyser) return;
 
-            // Calculate average frequency
-            const averageFrequency = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-            const maxRadius = Math.max(70, Math.min(130, 70 + (averageFrequency - 100) * 0.5));
-            const baseRadius = 50;
-            const numBars = 60;
-            const maxRepulsion = 100;
-
-            for (let i = 0; i < numBars; i++) {
-                const angle = (i / numBars) * Math.PI * 2;
-                const value = dataArray[i * 2] / 255;
-                const barHeight = value * (maxRadius - baseRadius) * 2;
-
-                const x1 = centerX + Math.cos(angle) * baseRadius;
-                const y1 = centerY + Math.sin(angle) * baseRadius;
-                const x2 = centerX + Math.cos(angle) * (baseRadius + barHeight);
-                const y2 = centerY + Math.sin(angle) * (baseRadius + barHeight);
-
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + value * 0.5})`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-
-            // Draw the repelling central shapes
-            const repulsionFactor = (averageFrequency / 255) * maxRepulsion;
-            const innerRadius1 = Math.min(50, 40 + repulsionFactor * 0.5);
-            const innerRadius2 = Math.min(50, 40 + repulsionFactor * 0.5);
-
-            // Shape 1
-            ctx.beginPath();
-            ctx.arc(centerX - repulsionFactor, centerY, innerRadius1, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, 0.8)`;
-            ctx.shadowColor = `rgba(255, 255, 255, 1)`;
-            ctx.shadowBlur = 15;
-            ctx.fill();
-
-            // Shape 2
-            ctx.beginPath();
-            ctx.arc(centerX + repulsionFactor, centerY, innerRadius2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, 0.8)`;
-            ctx.shadowColor = `rgba(255, 255, 255, 1)`;
-            ctx.shadowBlur = 15;
-            ctx.fill();
-        }
-
-        // Main animation loop
-        function animate() {
-            if (analyser) {
-                const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                analyser.getByteFrequencyData(dataArray);
-                drawVisualizer(dataArray);
-            }
-            requestAnimationFrame(animate);
-        }
-
-        // Initialize microphone
-        async function setupMicrophone() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                microphone = audioContext.createMediaStreamSource(stream);
-                analyser = audioContext.createAnalyser();
-                microphone.connect(analyser);
-                analyser.fftSize = 256;
-                animate();
-            } catch (err) {
-                console.error("خطأ في الوصول إلى الميكروفون:", err);
-                statusElement.textContent = "لا يمكن الوصول إلى الميكروفون.";
-                startButton.disabled = true;
-            }
-        }
-
-        // Start speech recognition process
-        function startListening() {
-            if (isListening || isSpeaking) return;
-
-            isListening = true;
-            statusElement.textContent = "أستمع...";
-            startButton.disabled = true;
-
-            // Initialize Speech Recognition interface
-            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'ar-AE'; // Speech recognition language: Arabic
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onresult = async (event) => {
-                const transcript = event.results[0][0].transcript;
-                statusElement.textContent = "جارٍ التفكير...";
-                isListening = false;
-                await processUserQuery(transcript);
-                startButton.disabled = false;
-            };
-
-            recognition.onspeechend = () => {
-                recognition.stop();
-            };
-
-            recognition.onend = () => {
-                if (!isSpeaking) {
-                    startButton.disabled = false;
-                    statusElement.textContent = "اضغط لبدء محادثة جديدة";
-                }
-            };
-
-            recognition.onerror = (event) => {
-                console.error("خطأ في التعرف على الكلام:", event.error);
-                statusElement.textContent = "حدث خطأ. حاول مرة أخرى.";
-                startButton.disabled = false;
-            };
-
-            recognition.start();
-        }
-
-        // Process user query using Gemini
-        async function processUserQuery(query, systemPrompt = "أنت مساعد ذكاء اصطناعي ودود ومفيد باللغة العربية. اجب على الأسئلة بوضوح ودقة.") {
-            try {
-                const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${api_key}`;
-                const payload = {
-                    contents: [{ parts: [{ text: query }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: {
-                        parts: [{ text: systemPrompt }]
-                    },
-                };
-
-                const response = await fetch(geminiApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`API Error: ${response.status} - ${JSON.stringify(errorData)}`);
-                }
-
-                const result = await response.json();
-                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (text) {
-                    lastResponseText = text;
-                    responseTextElement.textContent = text;
-                    responseContainer.style.display = 'block';
-                    await speakResponse(text);
-                } else {
-                    statusElement.textContent = "لم أتلقَ ردًا من الذكاء الاصطناعي.";
-                }
-            } catch (error) {
-                console.error("خطأ في معالجة الاستعلام:", error);
-                statusElement.textContent = "حدث خطأ في معالجة الاستعلام. يرجى التحقق من مفتاح API.";
-            } finally {
-                isListening = false;
-            }
-        }
-
-        // Convert text to speech using Gemini TTS
-        async function speakResponse(text) {
-            isSpeaking = true;
-            statusElement.textContent = "أتحدث...";
-            startButton.disabled = true;
-
-            const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${api_key}`;
-            const randomVoice = availableVoices[Math.floor(Math.random() * availableVoices.length)];
+            analyser.getByteFrequencyData(dataArray);
+            const bufferLength = analyser.frequencyBinCount;
+            const bass = getFrequencyAverage(0, bufferLength * 0.1, dataArray);
+            const mids = getFrequencyAverage(bufferLength * 0.1, bufferLength * 0.4, dataArray);
+            const treble = getFrequencyAverage(bufferLength * 0.4, bufferLength, dataArray);
             
-            const payload = {
-                contents: [{ parts: [{ text: text }] }],
-                generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: randomVoice }
-                        }
+            metaballs.forEach(ball => ball.update(bass, mids));
+            
+            if (treble > 180) {
+                createParticles(treble);
+            }
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    let sum = 0;
+                    metaballs.forEach(ball => {
+                        const dx = x - ball.x;
+                        const dy = y - ball.y;
+                        const distSq = dx * dx + dy * dy;
+                        sum += (ball.r * ball.r) / distSq;
+                    });
+                    
+                    if (sum >= 1) {
+                        pixels[index] = 0;     // R
+                        pixels[index + 1] = 0; // G
+                        pixels[index + 2] = 0; // B
+                        pixels[index + 3] = 255; // A
                     }
-                },
-            };
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.05;
+                if (p.alpha <= 0) particles.splice(i, 1);
+                
+                ctx.fillStyle = `rgba(0, 0, 0, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        function getFrequencyAverage(start, end, data) {
+            let sum = 0;
+            for (let i = Math.floor(start); i < Math.floor(end); i++) sum += data[i];
+            return sum / (end - start);
+        }
+
+        // --- 3. منطق المحادثة والذكاء الاصطناعي ---
+
+        function setupAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        const source = audioContext.createMediaStreamSource(stream);
+                        source.connect(analyser);
+                        if(!animationFrameId) drawAvatar();
+                    }).catch(err => alert("لا يمكن الوصول للميكروفون. يرجى السماح بالوصول في إعدادات المتصفح."));
+            }
+        }
+        
+        startButton.onclick = () => {
+            if (!isListening) {
+                if(!audioContext) setupAudio();
+                startListening();
+            }
+        };
+
+        function startListening() {
+            if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+            isListening = true;
+            recognition.start();
+            startButton.textContent = "أستمع الآن...";
+            statusDiv.textContent = "تفضل بالحديث...";
+            statusDiv.style.color = "#2ecc71";
+        }
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            statusDiv.textContent = `فهمت: "${transcript}"`;
+            isListening = false;
+            getGeminiResponse(transcript);
+        };
+        
+        recognition.onend = () => {
+             if (!isListening) {
+                startButton.textContent = "تحدث من جديد";
+                statusDiv.textContent = "اضغط للتحدث";
+                statusDiv.style.color = "var(--status-color)";
+            }
+        };
+
+        async function getGeminiResponse(prompt) {
+            statusDiv.textContent = "Gemini يعالج الطلب...";
+            statusDiv.style.color = "#f39c12";
+            
+            conversationHistory.push({ "role": "user", "parts": [{ "text": prompt }] });
 
             try {
-                const response = await fetch(ttsApiUrl, {
+                const response = await fetch(GEMINI_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ contents: conversationHistory }),
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`TTS API Error: ${response.status} - ${JSON.stringify(errorData)}`);
-                }
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType) {
-                    const sampleRate = 16000; // API returns 16k sample rate
-                    const pcm16 = base64ToPcm16Array(audioData);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-
-                    audio = new Audio(audioUrl);
-                    audio.onended = () => {
-                        isSpeaking = false;
-                        statusElement.textContent = "انتهى الحديث. جاهز للاستماع.";
-                        startButton.disabled = false;
-                        URL.revokeObjectURL(audioUrl);
-                    };
-                    audio.play();
-                } else {
-                    console.error("لم يتم استلام بيانات صوتية.");
-                    statusElement.textContent = "لم يتم استلام بيانات صوتية. حاول مرة أخرى.";
-                }
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                const geminiText = data.candidates[0].content.parts[0].text;
+                conversationHistory.push(data.candidates[0].content);
+                speak(geminiText);
             } catch (error) {
-                console.error("خطأ في تشغيل الصوت:", error);
-                statusElement.textContent = "حدث خطأ في تشغيل الصوت.";
-            } finally {
-                isSpeaking = false;
+                console.error("Error with Gemini API:", error);
+                statusDiv.textContent = "حدث خطأ في التواصل مع Gemini";
+                statusDiv.style.color = "#e74c3c";
+                speak("عذراً، حدث خطأ ما. هل يمكنك المحاولة مرة أخرى؟");
             }
         }
 
-        // Event listener for summarize button
-        summarizeButton.addEventListener('click', async () => {
-            if (lastResponseText) {
-                const prompt = `لخص النص التالي في جملة أو جملتين باللغة العربية: "${lastResponseText}"`;
-                await processUserQuery(prompt, "أنت مساعد ذكاء اصطناعي محترف في تلخيص النصوص. قم بتلخيص النص المطلوب بوضوح ودقة.");
-            }
-        });
+        function speak(text) {
+            statusDiv.textContent = "Gemini يتحدث...";
+            statusDiv.style.color = "#3498db";
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ar-SA';
+            utterance.pitch = 1;
+            utterance.rate = 1;
 
-        // Event listener for suggest button
-        suggestButton.addEventListener('click', async () => {
-            if (lastResponseText) {
-                const prompt = `بناءً على هذا النص، اقترح سؤالاً واحداً يمكنني طرحه لمواصلة المحادثة: "${lastResponseText}"`;
-                await processUserQuery(prompt, "أنت مساعد ذكاء اصطناعي محترف في اقتراح أسئلة للمتابعة. قم باقتراح سؤال واحد واضح ومباشر.");
-            }
-        });
+            utterance.onend = () => {
+                startButton.textContent = "تحدث الآن";
+                statusDiv.textContent = "اضغط على الزر لبدء المحادثة";
+                statusDiv.style.color = "var(--status-color)";
+            };
 
-        window.onload = () => {
-            setupMicrophone();
-            startButton.addEventListener('click', startListening);
-        };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // بدء الرسم بشكل ثابت قبل بدء المحادثة
+        drawAvatar();
+        cancelAnimationFrame(animationFrameId); // إيقاف الأنيميشن حتى يتم الضغط على الزر
+
     </script>
 
 </body>
